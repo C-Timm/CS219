@@ -1,5 +1,6 @@
 // Listing: Main.cpp
 #include <iostream>
+#include <ctime>
 using namespace std;
 
 
@@ -8,19 +9,25 @@ extern "C" int FindSmallest(int* i, int count);
 
 int MakeData();
 
+
 int main() {
-	
 
-	const unsigned ARRAY_LENGTH = 10;
+	srand(time(NULL));
+	const unsigned ARRAY_LENGTH = 10000000;
 
-	int *arr = new int[ARRAY_LENGTH];
-	arr[ARRAY_LENGTH] = { MakeData() };
+	int* arr = new int[ARRAY_LENGTH];
+
+	for (int i = 0; i < ARRAY_LENGTH; i++)
+	{
+		arr[i] = { MakeData() };
 	
-		cout << "Smallest is " << FindSmallest(arr, ARRAY_LENGTH) << endl;
+	}
+	cout << "Smallest is " << FindSmallest(arr, ARRAY_LENGTH) << endl;
 
 	cin.get();
 	return 0;
 }
 int  MakeData() {
-	return rand() % (100 - 99) + -99;
+	
+	return (rand() % 198) -99;
 }
