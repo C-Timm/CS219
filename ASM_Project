@@ -16,6 +16,7 @@ int FindSmallestSSE(int data[], const unsigned ARRAY_LENGTH);
 int accumulateC(int data[], const unsigned ARRAY_LENGTH);
 int accumulateSSE(int data[], const unsigned ARRAY_LENGTH);
 int takeInput();
+
 int main() {
 	//*****************************************************
 	//* Data must be aligned on the largest datatype width
@@ -23,20 +24,17 @@ int main() {
 	//*  - SSE is 128-bit (16 bytes)
 	//*  - AVX is 256-bit (32 bytes)
 	//******************************************************
-
+	//srand(time(NULL));
 	unsigned int L = takeInput();
 	cin.get();
-	
-	
 
 	const unsigned long ARRAY_LENGTH = L * 4; //SSE datatype width. Avoids last elements being undefined.
 	__declspec(align(16))  int* pData = new int[ARRAY_LENGTH];	//Force data onto heap aligned on 128-bit boundary
-	int smallest;		
-	int totalC;
-	int totalSSE;
+	int smallest;
+	int totalC, totalSSE;
 
 	MakeData(pData, ARRAY_LENGTH);	//Initialize the array with random data
-	
+
 	//setup timers
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
@@ -60,7 +58,7 @@ int main() {
 
 	//C accumulation
 	start = std::chrono::system_clock::now();
-	totalC = accumulateC(pData, ARRAY_LENGTH);
+	totalC = accumulateC(pData, ARRAY_LENGTH);	
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	std::cout << "C code accumulation time:  " << elapsed_seconds.count() << "s\n";
@@ -106,8 +104,7 @@ int FindSmallestSSE(int data[], const unsigned ARRAY_LENGTH)
 	__m128i *pData = reinterpret_cast<__m128i*>(data);	//Change to point on 128-bit boundary
 	__m128i min = _mm_load_si128(pData);	//Init an SSE register with first element value pData[0]	
 											//Can use _mm_loadu_si128() if not sure data is aligned
-
-	//Setup loop to iterate by the length of the SSE register
+											//Setup loop to iterate by the length of the SSE register
 	for (__m128i *i = pData, *end = reinterpret_cast<__m128i*>(&data[ARRAY_LENGTH / 4]); i < end; i++)
 	{
 		min = _mm_min_epi32(min, *i);
@@ -117,29 +114,29 @@ int FindSmallestSSE(int data[], const unsigned ARRAY_LENGTH)
 
 int accumulateC(int data[], const unsigned ARRAY_LENGTH)
 {
-	unsigned int total = 0 ;
+	 int total = 0;
 	for (int i = 0; i < ARRAY_LENGTH; i++)
 	{
-		total -= data[i];
+		total += data[i];
 	}
 	return total;
 }
+
 int accumulateSSE(int data[], const unsigned ARRAY_LENGTH)
 {
-	int boundary = ARRAY_LENGTH / 4;   //Boundary to prevent from overflow
+	//int boundary = ARRAY_LENGTH ;   //Boundary to prevent from overflow
 	__m128i total = _mm_setzero_si128(); // iniatilizing total to be returned
-	__m128i bounds = _mm_cvtsi32_si128(boundary);  //Converts bounds to 128
+	__m128i bounds = _mm_cvtsi32_si128(ARRAY_LENGTH);  //Converts bounds to 128
 
 	for (int j = 0; j < ARRAY_LENGTH; j++)
 	{
 		__m128i value = _mm_cvtsi32_si128(data[j]); //vaule of data at j
 		__m128i test = _mm_cmplt_epi32(value, bounds); // test for overflow 
-		total = _mm_sub_epi32(total, value); // accumulates total 
+		total = _mm_add_epi32(total, value); // accumulates total 
 	}
 	return _mm_cvtsi128_si32(total);
-
-	
 }
+//Returns input from user 
 int takeInput()
 {
 	int L;
@@ -154,20 +151,6 @@ int takeInput()
 			cout << "The amount your entered was to larger, Enter a number less then equal to 50M: ";
 			cin >> L;
 		}
-
 	} while (test = false);
-		return L;
+	return L;
 }
-
-/*
-__m128i *pData = reinterpret_cast<__m128i*>(data);
-__m128i total = _mm_load_si128(pData);
-for (__m128i *i = pData, *end = reinterpret_cast<__m128i*>(&data[ARRAY_LENGTH / 4]); i < end; i++)
-{
-
-
-total = _mm_add_epi32(total, *i);
-}
-
-return total.m128i_i32[0];
-*/
